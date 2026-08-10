@@ -17,6 +17,7 @@
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@next/mdx": "latest",
     "@types/mdx": "latest",
+    "@vercel/analytics": "^2.0.1",
     "gray-matter": "latest",
     "next": "latest",
     "next-mdx-remote": "latest",
