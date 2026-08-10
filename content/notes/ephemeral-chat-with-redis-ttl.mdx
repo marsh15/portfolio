@@ -1,0 +1,42 @@
+---
+title: Designing Ephemeral Chat with Redis TTL
+---
+
+“Temporary chat” is not just a permanent chat product with a cleanup task added later. Expiry changes the data model, the user promise, and the failure cases from the beginning.
+
+PingMe starts with that constraint: rooms are anonymous, state lives in Redis, and room data expires through TTL rather than becoming a permanent history.
+
+## Make lifetime part of the model
+
+A room needs more than an identifier. It needs an expiry policy that is set when the room is created and updated only under clear rules.
+
+That creates a few direct questions:
+
+- Does activity extend the room lifetime?
+- What happens when a user reconnects near expiry?
+- Can a message outlive its room metadata?
+- What should the interface show when the room disappears?
+
+If those decisions are vague, “ephemeral” becomes a marketing label instead of system behavior.
+
+## Redis fits the promise
+
+Redis is useful here because expiry is a property of the stored key. The system does not need a separate database table and periodic process just to discover stale rooms.
+
+The room and its related state should share a predictable lifetime. Key design matters: namespacing related records makes it easier to reason about cleanup and avoid leaving pieces behind after the main room expires.
+
+## Absence is a normal state
+
+In a persistent application, a missing room can look like corruption. In an ephemeral application, it may mean the system worked correctly.
+
+That affects both API responses and UI copy. The user needs a clear distinction between an invalid room code, an expired room, and a temporary connection problem. All three can look like “nothing loaded” unless the system names them.
+
+## Be precise about privacy
+
+No accounts and expiring server state reduce what the product retains. They do not automatically prove end-to-end encryption, prevent screenshots, or control data already visible on another device.
+
+The honest promise is the one the architecture can support: rooms and chat state are intentionally short-lived and are not written to a permanent message history.
+
+## The lesson
+
+TTL is more than cleanup. It is a product rule enforced by storage. Once expiry becomes a first-class state, the rest of the design gets clearer: keys, reconnect behavior, errors, and user expectations all follow from the same boundary.

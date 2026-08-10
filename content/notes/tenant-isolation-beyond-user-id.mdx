@@ -1,0 +1,41 @@
+---
+title: Tenant Isolation Beyond a userId Filter
+---
+
+Multi-tenant applications often begin with a familiar rule: add a `userId` condition to every query. It is simple, readable, and useful—but it also asks every application path to remember the same security decision forever.
+
+Ledgerly stores private financial records, so I wanted ownership to be enforced in more than one place.
+
+## The application layer still matters
+
+Authentication establishes who is making a request. The service layer then scopes reads and writes to that verified identity. This is where the product can give clear errors, validate intent, and keep authorization close to the use case.
+
+The risk is omission. A new report, background job, or hand-written query can accidentally forget the ownership clause. Type safety does not prove that every query includes the right tenant boundary.
+
+## Put a boundary in the database
+
+PostgreSQL row-level security adds a second enforcement point. Instead of relying only on query authors, policies define which rows the current tenant may access.
+
+The useful mental model is defense in depth:
+
+- authentication answers **who is calling**;
+- application authorization answers **what this operation allows**;
+- row-level security limits **which records can be touched**.
+
+These layers do not replace one another. They fail differently, which is why combining them is valuable.
+
+## Context must be explicit
+
+Database policies only help when the connection carries trustworthy tenant context. That context must come from verified authentication, be set for the transaction doing the work, and be cleared or isolated correctly when connections are reused.
+
+This is the detail that turns RLS from a checkbox into an actual boundary. A policy without reliable session context can create false confidence.
+
+## Test the negative path
+
+Happy-path tests prove that a user can read their own records. Isolation tests prove that they cannot read someone else’s.
+
+The cases I care about are deliberately adversarial: requesting another tenant’s identifier, attempting an update through an alternate endpoint, and checking that analytics cannot cross ownership boundaries.
+
+## The lesson
+
+`userId` filters are useful application logic, not a complete isolation strategy. For sensitive data, I prefer independent layers that agree on ownership. If one query is written incorrectly, the database should still have a reason to say no.

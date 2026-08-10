@@ -1,0 +1,42 @@
+---
+title: Building RAG That Can Say “I Don’t Know”
+---
+
+A retrieval-augmented generation system earns trust in two ways: it shows its work when the evidence is good, and it stops when the evidence is weak. The second behavior is harder to demo, but it matters more.
+
+While building SCRIBE, I treated the response as the end of a pipeline—not the product by itself. A polished paragraph can still be wrong. The useful question is whether every important claim can be traced back to retrieved context.
+
+## Retrieval comes before generation
+
+The model cannot repair missing evidence. If chunking removes context or retrieval ranks the wrong passage, generation starts from a bad foundation.
+
+That pushed the design toward a clear sequence:
+
+1. parse each uploaded document;
+2. divide it into chunks that retain useful context;
+3. embed and index those chunks;
+4. retrieve a small evidence set for the question;
+5. generate only from that set;
+6. preserve source metadata for citations.
+
+The ordering is intentional. Each stage gives the next stage a narrower, more testable input.
+
+## A citation is part of the answer
+
+Returning a source list after the response is not enough. A citation should stay connected to the claim it supports. That means chunk metadata—document identity, location, and text—must survive retrieval and generation.
+
+This changes the interface too. The answer is not just prose; it is structured information with a visible evidence path. When a reader opens a citation, they should be able to judge whether the retrieved passage really supports the response.
+
+## Abstention needs a path
+
+“I don’t know” should not depend on a hopeful sentence in the prompt. The system needs a supported-answer check: is the retrieved context relevant enough, and does it contain what the response is claiming?
+
+When that check fails, the better result is a useful boundary:
+
+> I could not find enough support for that answer in the uploaded documents.
+
+That response is less impressive in a demo and more valuable in use. It tells the reader what the system knows, what it does not know, and where to look next.
+
+## The lesson
+
+RAG is not mainly about making a model sound informed. It is about controlling the evidence available to it and making uncertainty visible. Retrieval quality, citations, isolation, and abstention are not supporting features. Together, they are the trust model.
