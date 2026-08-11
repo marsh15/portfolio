@@ -204,13 +204,13 @@ function readCount(value: unknown): number | null {
   for (const key of ["visitors", "visitorCount", "count", "total", "value"]) {
     if (typeof row[key] === "number") return row[key];
   }
-  return null;
+  return readCount(row.data);
 }
 
 export async function getVisitors(): Promise<LiveResult<VisitorSnapshot>> {
-  const token = process.env.VERCEL_API_TOKEN;
-  const projectId = process.env.VERCEL_PROJECT_ID;
-  const teamId = process.env.VERCEL_TEAM_ID;
+  const token = process.env.VERCEL_API_TOKEN || process.env.VERCEL_ANALYTICS_TOKEN;
+  const projectId = process.env.VERCEL_PROJECT_ID || process.env.VERCEL_ANALYTICS_PROJECT_ID;
+  const teamId = process.env.VERCEL_TEAM_ID || process.env.VERCEL_ANALYTICS_TEAM_ID;
   if (!token || !projectId) return unavailable("Visitor totals begin after analytics is connected.");
   try {
     const to = new Date();
@@ -218,12 +218,13 @@ export async function getVisitors(): Promise<LiveResult<VisitorSnapshot>> {
     const common = new URLSearchParams({
       projectId,
       ...(teamId ? { teamId } : {}),
-      from: from.toISOString(),
-      to: to.toISOString(),
+      since: from.toISOString(),
+      until: to.toISOString(),
       filter: "environment eq 'production'",
     });
     const aggregate = new URLSearchParams(common);
     aggregate.set("by", "country");
+    aggregate.set("limit", "6");
     const headers = { Authorization: `Bearer ${token}` };
     const [countBody, countryBody] = await Promise.all([
       fetch(`https://api.vercel.com/v1/query/web-analytics/visits/count?${common}`, { headers, next: { revalidate: 3600 }, signal: AbortSignal.timeout(7000) }).then(safeJson),

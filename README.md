@@ -16,7 +16,7 @@ Copy `.env.example` to `.env.local`. The portfolio is complete without private c
 - `NEXT_PUBLIC_SITE_URL`: production origin for canonical links, sitemap, and social metadata.
 - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`: current or recently played track and official Spotify player embed. Authorize with `user-read-currently-playing user-read-recently-played`.
 - `GITHUB_TOKEN`: read-only server-side token for the public contribution calendar of `marsh15`.
-- `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, and optional `VERCEL_TEAM_ID`: aggregate 30-day visitor count from Vercel Web Analytics.
+- `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, and optional `VERCEL_TEAM_ID`: aggregate 30-day visitor count from Vercel Web Analytics. The `VERCEL_ANALYTICS_TOKEN`, `VERCEL_ANALYTICS_PROJECT_ID`, and `VERCEL_ANALYTICS_TEAM_ID` names are also accepted.
 
 Weather comes from Open-Meteo and needs no private key. Enable Web Analytics on the production Vercel project for visitor data.
 

@@ -29,12 +29,23 @@ export function PortfolioSignals() {
   }, []);
 
   useEffect(() => {
-    void load();
+    const initialLoad = window.setTimeout(() => void load(), 0);
+    const polling = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 30_000);
     const onVisibility = () => {
       if (document.visibilityState === "visible") void load();
     };
+    const onFocus = () => void load();
+
+    window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(polling);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [load]);
 
   const github = data?.github;

@@ -6,7 +6,9 @@ export async function GET() {
   const data = await getLiveLedger();
   return Response.json(data, {
     headers: {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      "Cache-Control": "private, no-store, no-cache, max-age=0, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Vercel-CDN-Cache-Control": "no-store",
     },
   });
 }
