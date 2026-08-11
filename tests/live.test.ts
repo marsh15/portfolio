@@ -63,4 +63,46 @@ describe("live ledger providers", () => {
       expect(result.data).toMatchObject({ mode: "recent", track: "A Quiet Test", artists: ["Example Artist"] });
     }
   });
+
+  it("reads the documented Vercel visitor response for the last 30 days", async () => {
+    vi.stubEnv("VERCEL_API_TOKEN", "token");
+    vi.stubEnv("VERCEL_PROJECT_ID", "project");
+    vi.stubEnv("VERCEL_TEAM_ID", "team");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({
+        version: 1,
+        query: { since: "2026-07-12", until: "2026-08-11" },
+        data: { pageviews: 72, visitors: 37 },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        version: 1,
+        query: { since: "2026-07-12", until: "2026-08-11", groupBy: ["country"] },
+        data: [
+          { country: "in", pageviews: 40, visitors: 24 },
+          { country: "us", pageviews: 18, visitors: 9 },
+        ],
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await getVisitors();
+
+    expect(result).toMatchObject({
+      status: "ok",
+      data: {
+        windowDays: 30,
+        total: 37,
+        countries: [
+          { code: "IN", count: 24 },
+          { code: "US", count: 9 },
+        ],
+      },
+    });
+    for (const [input] of fetchMock.mock.calls) {
+      const url = new URL(String(input));
+      expect(url.searchParams.has("since")).toBe(true);
+      expect(url.searchParams.has("until")).toBe(true);
+      expect(url.searchParams.has("from")).toBe(false);
+      expect(url.searchParams.has("to")).toBe(false);
+    }
+  });
 });
